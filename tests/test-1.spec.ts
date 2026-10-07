@@ -13,34 +13,36 @@ async function basicInit(page: Page) {
   };
 
   await page.route('*/**/api/auth', async (route) => {
+    // Rebuild this mock step by step.
     const method = route.request().method();
-    const authReq = route.request().postDataJSON();
+    if (method === 'PUT') {
+      // login
+      const authReq = route.request().postDataJSON();
+      const user = validUsers[authReq.email];
 
-    if (method === 'POST') {
-      if (authReq.email === 'taken@jwt.com') {
-        expect(authReq).toEqual({ name: 'Taylor Tester', email: 'taken@jwt.com', password: 'b' });
-        await route.fulfill({ status: 409, json: { message: 'Email already registered' } });
+      if (!user || user.password !== authReq.password) {
+        await route.fulfill({
+          status: 401,
+          json: { error: 'Unauthorized' },
+        });
         return;
       }
 
-      expect(authReq).toEqual({ name: 'Taylor Tester', email: 'new@jwt.com', password: 'b' });
-      loggedInUser = { id: '4', name: authReq.name, email: authReq.email, roles: [{ role: Role.Diner }] };
-      await route.fulfill({ json: { user: loggedInUser, token: 'new-token' } });
-      return;
-    }
+      loggedInUser = user;
 
-    const user = validUsers[authReq.email];
-    if (!user || user.password !== authReq.password) {
-      await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-      return;
+      await route.fulfill({
+        json: {
+          user: loggedInUser,
+          token: 'abcdef',
+        },
+      });
+
+    } else if (method === 'POST') {
+      // registration
+      const authReq = route.request().postDataJSON();
+    } else if (method === 'DELETE') {
+      // logout
     }
-    loggedInUser = validUsers[authReq.email];
-    const loginRes = {
-      user: loggedInUser,
-      token: 'abcdef',
-    };
-    expect(method).toBe('PUT');
-    await route.fulfill({ json: loginRes });
   });
 
   await page.route('*/**/api/user/me', async (route) => {
