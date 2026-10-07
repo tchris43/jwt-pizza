@@ -63,8 +63,15 @@ async function basicInit(page: Page) {
           token: 'new-token',
         },
       });
+      return;
     } else if (method === 'DELETE') {
       // logout
+      loggedInUser = undefined;
+
+      await route.fulfill({
+        status: 200,
+        json: {},
+      });
     }
   });
 
