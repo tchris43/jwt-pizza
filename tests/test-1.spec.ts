@@ -40,6 +40,29 @@ async function basicInit(page: Page) {
     } else if (method === 'POST') {
       // registration
       const authReq = route.request().postDataJSON();
+
+      if (authReq.email === 'taken@jwt.com') {
+        await route.fulfill({
+          status: 409,
+          json: { message: 'Email already registered' },
+        });
+        return;
+      }
+
+      const dinerUser: User = {
+        id: '4',
+        name: authReq.name,
+        email: authReq.email,
+        roles: [{ role: Role.Diner }],
+      };
+
+      loggedInUser = dinerUser;
+      await route.fulfill({
+        json: {
+          user: loggedInUser,
+          token: 'new-token',
+        },
+      });
     } else if (method === 'DELETE') {
       // logout
     }
