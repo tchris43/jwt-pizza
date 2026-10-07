@@ -89,6 +89,20 @@ async function basicInit(page: Page) {
   let franchiseStores = [{ id: 8, name: 'Lehi', totalRevenue: 50 }];
 
   await page.route(/\/api\/franchise\/2$/, async (route) => {
+    expect(route.request().method()).toBe('GET');
+
+    await route.fulfill({
+      json: [
+        {
+          id: 2,
+          name: 'Frank Franchise Pizza',
+          stores: franchiseStores,
+        },
+      ],
+    });
+  });
+
+  await page.route(/\/api\/franchise\/2\/store(?:\/\d+)?$/, async (route) => {
     const method = route.request().method();
 
     if (method == 'POST') {
@@ -111,24 +125,13 @@ async function basicInit(page: Page) {
       return;
     }
 
-    
-  });
-
-  await page.route(/\/api\/franchise\/2\/store(?:\/\d+)?$/, async (route) => {
-    const method = route.request().method();
-
-    if (method === 'POST') {
-      const storeRequest = route.request().postDataJSON();
-      expect(storeRequest).toEqual({ id: '', name: 'Provo' });
-      const newStore = { id: 9, name: storeRequest.name, totalRevenue: 0 };
-      franchiseStores = [...franchiseStores, newStore];
-      await route.fulfill({ json: newStore });
-      return;
-    }
-
     expect(method).toBe('DELETE');
-    franchiseStores = franchiseStores.filter((store) => !route.request().url().endsWith(`/store/${store.id}`));
-    await route.fulfill({ json: null });
+
+    franchiseStores = franchiseStores.filter(
+      (store) => !route.request().url().endsWith(`/store/${store.id}`)
+    );
+
+    await route.fulfill({json:null});
   });
 
   await page.route('*/**/api/order', async (route) => {
