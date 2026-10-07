@@ -89,11 +89,29 @@ async function basicInit(page: Page) {
   let franchiseStores = [{ id: 8, name: 'Lehi', totalRevenue: 50 }];
 
   await page.route(/\/api\/franchise\/2$/, async (route) => {
-    expect(route.request().method()).toBe('GET');
-    await route.fulfill({
-      // getFranchise() returns a Franchise[] rather than a FranchiseList object.
-      json: [{ id: 2, name: 'Frank Franchise Pizza', stores: franchiseStores }],
-    });
+    const method = route.request().method();
+
+    if (method == 'POST') {
+      const storeRequest = route.request().postDataJSON();
+
+      expect(storeRequest).toEqual({
+        id: '',
+        name: 'Provo',
+      });
+
+      const newStore = {
+        id: 9,
+        name: storeRequest.name,
+        totalRevenue: 0,
+      };
+
+      franchiseStores = [...franchiseStores, newStore];
+
+      await route.fulfill({ json: newStore});
+      return;
+    }
+
+    
   });
 
   await page.route(/\/api\/franchise\/2\/store(?:\/\d+)?$/, async (route) => {
