@@ -4,6 +4,12 @@ const pizzaServiceUrl = import.meta.env.VITE_PIZZA_SERVICE_URL;
 const pizzaFactoryUrl = import.meta.env.VITE_PIZZA_FACTORY_URL;
 
 class HttpPizzaService implements PizzaService {
+  async updateUser(updatedUser: User): Promise<User> {
+    const { user, token } = await this.callEndpoint(`/api/user/${updatedUser.id}`, 'PUT', updatedUser);
+    localStorage.setItem('token', token);
+    return Promise.resolve(user);
+  }
+
   async callEndpoint(path: string, method: string = 'GET', body?: any): Promise<any> {
     return new Promise(async (resolve, reject) => {
       try {
