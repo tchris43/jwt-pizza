@@ -292,8 +292,51 @@ test('list users', async ({ page }) => {
 });
 
 
-test('delete user')
+test('admin can delete a user from the user list', async ({ page }) => {
+  await mockRoleUser(page, Role.Admin);
+  let mockUsers = [
+    { id: 'delete-me', name: 'Disposable User', email: 'disposable@example.test', roles: [{ role: Role.Diner }] },
+  ];
 
-//fix syntax
+  await page.route('**/api/franchise**', async (route) => {
+    await route.fulfill({ json: { franchises: [], more: false } });
+  });
+  await page.route(/\/api\/user\?/, async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const limit = Number(params.get('limit'));
+    const nameFilter = (params.get('name') ?? '*').replace(/\*/g, '').toLowerCase();
+    const matchingUsers = mockUsers.filter((user) => user.name.toLowerCase().includes(nameFilter));
+    await route.fulfill({ status: 200, json: matchingUsers.slice(0, limit) });
+  });
+  await page.route('**/api/user/delete-me', async (route) => {
+    expect(route.request().method()).toBe('DELETE');
+    mockUsers = mockUsers.filter((user) => user.id !== 'delete-me');
+    await route.fulfill({ status: 200, json: { success: true } });
+  });
 
-l
+  await page.goto('/');
+  await loginUser(page, 'admin-test@jwt.com', 'test-password');
+  await page.getByRole('link', { name: 'Admin', exact: true }).click();
+
+  const userResults = page.getByRole('list', { name: 'User results' });
+  const initialListResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/user?') && response.request().method() === 'GET'
+  );
+  await page.getByRole('button', { name: 'List users', exact: true }).click();
+  expect((await initialListResponse).ok()).toBe(true);
+  await expect(userResults).toContainText('Disposable User');
+
+  const deleteResponse = page.waitForResponse((response) =>
+    response.url().endsWith('/api/user/delete-me') && response.request().method() === 'DELETE'
+  );
+  await page.getByRole('button', { name: 'Delete Disposable User' }).click();
+  expect((await deleteResponse).ok()).toBe(true);
+
+  const updatedListResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/user?') && response.request().method() === 'GET'
+  );
+  await page.getByRole('button', { name: 'List users', exact: true }).click();
+  expect((await updatedListResponse).ok()).toBe(true);
+  await expect(userResults.getByRole('listitem')).toHaveCount(0);
+  await expect(userResults).not.toContainText('Disposable User');
+});

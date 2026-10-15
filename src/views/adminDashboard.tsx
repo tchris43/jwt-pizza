@@ -37,6 +37,11 @@ export default function AdminDashboard(props: Props) {
     setShowUsers(true);
   }
 
+  async function deleteListedUser(user: User) {
+    await pizzaService.deleteUser(user);
+    setUsers((currentUsers) => currentUsers.filter((currentUser) => currentUser.id !== user.id));
+  }
+
   async function closeFranchise(franchise: Franchise) {
     navigate('/admin-dashboard/close-franchise', { state: { franchise: franchise } });
   }
@@ -149,6 +154,9 @@ export default function AdminDashboard(props: Props) {
               {users.map((listedUser) => (
                 <li key={listedUser.id}>
                   {listedUser.name ?? 'Unnamed user'} ({listedUser.email ?? 'No email'})
+                  <button type="button" aria-label={`Delete ${listedUser.name ?? listedUser.email ?? 'user'}`} onClick={() => deleteListedUser(listedUser)}>
+                    Delete
+                  </button>
                 </li>
               ))}
             </ul>
