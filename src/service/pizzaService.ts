@@ -111,7 +111,7 @@ interface PizzaService {
   closeStore(franchise: Franchise, store: Store): Promise<null>;
   docs(docType: string): Promise<Endpoints>;
   updateUser(user: User): Promise<User>;
-  getUsers(limit?: number, nameFilter?: string): Promise<User[]>; //update to take search parameter
+  getUsers(limit?: number, nameFilter?: string): Promise<User[]>;
 }
 
 export { Role, PizzaService, User, Menu, Pizza, OrderHistory, Order, Franchise, FranchiseList, Store, OrderItem, Endpoint, Endpoints, OrderResponse, JWTPayload };

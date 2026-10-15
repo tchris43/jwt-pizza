@@ -290,3 +290,10 @@ test('list users', async ({ page }) => {
   await expect(userResults).toContainText('Sample Diner');
   await expect(userResults).not.toContainText('Sample Franchisee');
 });
+
+
+test('delete user')
+
+//fix syntax
+
+l
