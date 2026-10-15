@@ -222,14 +222,34 @@ test('change user information as franchisee', async ({ page }) => {
   await expect(page.getByRole('main')).toContainText(email);
 });
 
-test('admin can see the List users button', async ({ page }) => {
+test('list users', async ({ page }) => {
   await mockRoleUser(page, Role.Admin);
   await page.route('**/api/franchise**', async (route) => {
     await route.fulfill({ json: { franchises: [], more: false } });
+  });
+  await page.route(/\/api\/user\?/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: [
+        { id: 'user-1', name: 'Sample Diner', email: 'diner@example.test', roles: [{ role: Role.Diner }] },
+        { id: 'user-2', name: 'Sample Franchisee', email: 'franchisee@example.test', roles: [{ role: Role.Franchisee }] },
+      ],
+    });
   });
 
   await page.goto('/');
   await loginUser(page, 'admin-test@jwt.com', 'test-password');
   await page.getByRole('link', { name: 'Admin', exact: true }).click();
   await expect(page.getByRole('button', { name: 'List users', exact: true })).toBeVisible();
+  const usersResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/user?') && response.request().method() === 'GET'
+  );
+  await page.getByRole('button', { name: 'List users', exact: true }).click();
+  expect((await usersResponse).ok()).toBe(true);
+
+  const userResults = page.getByRole('list', { name: 'User results' });
+  await expect(userResults).toBeVisible();
+  await expect(userResults.getByRole('listitem')).toHaveCount(2);
+  await expect(userResults).toContainText('Sample Diner');
+  await expect(userResults).toContainText('Sample Franchisee');
 });

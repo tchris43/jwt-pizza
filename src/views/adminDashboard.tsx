@@ -15,6 +15,8 @@ export default function AdminDashboard(props: Props) {
   const navigate = useNavigate();
   const [franchiseList, setFranchiseList] = React.useState<FranchiseList>({ franchises: [], more: false });
   const [franchisePage, setFranchisePage] = React.useState(0);
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [showUsers, setShowUsers] = React.useState(false);
   const filterFranchiseRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -25,6 +27,10 @@ export default function AdminDashboard(props: Props) {
 
   function createFranchise() {
     navigate('/admin-dashboard/create-franchise');
+  }
+  async function listUsers() {
+    setUsers(await pizzaService.getUsers());
+    setShowUsers(true);
   }
 
   async function closeFranchise(franchise: Franchise) {
@@ -122,7 +128,20 @@ export default function AdminDashboard(props: Props) {
         </div>
         <div>
           <Button className="w-36 text-xs sm:text-sm sm:w-64" title="Add Franchise" onPress={createFranchise} />
+          <Button className="w-36 text-xs sm:text-sm sm:w-64" title="List users" onPress={listUsers} />
         </div>
+        {showUsers && (
+          <section aria-label="Users" className="my-4 text-neutral-100">
+            <h3 className="text-xl">Users</h3>
+            <ul aria-label="User results">
+              {users.map((listedUser) => (
+                <li key={listedUser.id}>
+                  {listedUser.name ?? 'Unnamed user'} ({listedUser.email ?? 'No email'})
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </View>
     );
   }
