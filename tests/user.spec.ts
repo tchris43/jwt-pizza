@@ -21,7 +21,7 @@ async function logoutUser(page: Page) {
 }
 
 async function loginUser(page: Page, email: string, password: string) {
-  await page.getByRole('link', { name: 'Login' }).click();
+  await page.getByRole('link', { name: 'Login', exact: true }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill(email);
   await page.getByRole('textbox', { name: 'Password' }).fill(password);
   await page.getByRole('button', { name: 'Login' }).click();
@@ -59,11 +59,7 @@ async function mockRoleUser(page: Page, role: Role) {
     await route.fulfill({ json: null });
   });
 
-  await page.route('**/api/user/*', async (route) => {
-    if (route.request().method() !== 'PUT') {
-      await route.continue();
-      return;
-    }
+  await page.route(`**/api/user/${user.id}`, async (route) => {
     const changes = route.request().postDataJSON();
     user = { ...user, ...changes, roles: user.roles };
     await route.fulfill({ json: { user, token: 'role-test-token' } });
