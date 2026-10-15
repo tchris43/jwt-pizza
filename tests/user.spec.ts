@@ -95,29 +95,61 @@ test('change password and email address', async ({ page }) => {
 });
 
 test('change user information as admin', async ({ page }) => {
-  //login as an admin
+  const email = 'admin@jwt.com';
+  const password = 'admin';
+  const updatedEmail = email.replace('@', '+updated@');
+  const updatedPassword = `${password}-updated`;
 
-  //navigate to edit profile
+  await page.goto('/');
+  await loginUser(page, email, password);
+  await page.locator('a[href="/diner-dashboard"]').click();
 
-  //change email and pass
+  await page.getByRole('button', { name: 'Edit' }).click();
+  const dialog = page.getByRole('dialog');
+  const fields = dialog.getByRole('textbox');
+  await fields.nth(1).fill(updatedEmail);
+  await fields.nth(2).fill(updatedPassword);
+  await dialog.getByRole('button', { name: 'Update' }).click();
+  await expect(dialog).toBeHidden();
 
-  //verify it shows
+  await expect(page.getByRole('main')).toContainText(updatedEmail);
 
-  //logout and log back in with new pass and still shows
+  await logoutUser(page);
+  await loginUser(page, updatedEmail, updatedPassword);
+  await page.locator('a[href="/diner-dashboard"]').click();
+  await expect(page.getByRole('main')).toContainText(updatedEmail);
 
-  //try to log in with old pass and it errors
+  await logoutUser(page);
+  await loginUser(page, updatedEmail, password);
+  await expect(page.getByText(/"code":\d+/)).toBeVisible();
 });
 
 test('change user information as franchise', async ({ page }) => {
-  //login as an franchise
+  const email = 'franchise@jwt.com';
+  const password = 'franchise';
+  const updatedEmail = email.replace('@', '+updated@');
+  const updatedPassword = `${password}-updated`;
 
-  //navigate to edit profile
+  await page.goto('/');
+  await loginUser(page, email, password);
+  await page.locator('a[href="/diner-dashboard"]').click();
 
-  //change email and pass
+  await page.getByRole('button', { name: 'Edit' }).click();
+  const dialog = page.getByRole('dialog');
+  const fields = dialog.getByRole('textbox');
+  await fields.nth(1).fill(updatedEmail);
+  await fields.nth(2).fill(updatedPassword);
+  await dialog.getByRole('button', { name: 'Update' }).click();
+  await expect(dialog).toBeHidden();
 
-  //verify it shows
+  await expect(page.getByRole('main')).toContainText(updatedEmail);
 
-  //logout and log back in with new pass and still shows
+  await logoutUser(page);
+  await loginUser(page, updatedEmail, updatedPassword);
+  await page.locator('a[href="/diner-dashboard"]').click();
+  await expect(page.getByRole('main')).toContainText(updatedEmail);
 
-  //try to log in with old pass and it errors
+  await logoutUser(page);
+  await loginUser(page, updatedEmail, password);
+  await expect(page.getByText(/"code":\d+/)).toBeVisible();
 });
