@@ -221,3 +221,15 @@ test('change user information as franchisee', async ({ page }) => {
   await page.locator('a[href="/diner-dashboard"]').click();
   await expect(page.getByRole('main')).toContainText(email);
 });
+
+test('admin can see the List users button', async ({ page }) => {
+  await mockRoleUser(page, Role.Admin);
+  await page.route('**/api/franchise**', async (route) => {
+    await route.fulfill({ json: { franchises: [], more: false } });
+  });
+
+  await page.goto('/');
+  await loginUser(page, 'admin-test@jwt.com', 'test-password');
+  await page.getByRole('link', { name: 'Admin', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'List users', exact: true })).toBeVisible();
+});
