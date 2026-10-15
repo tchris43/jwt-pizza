@@ -232,10 +232,13 @@ test('list users', async ({ page }) => {
       { id: 'user-1', name: 'Sample Diner', email: 'diner@example.test', roles: [{ role: Role.Diner }] },
       { id: 'user-2', name: 'Sample Franchisee', email: 'franchisee@example.test', roles: [{ role: Role.Franchisee }] },
     ];
-    const limit = Number(new URL(route.request().url()).searchParams.get('limit'));
+    const params = new URL(route.request().url()).searchParams;
+    const limit = Number(params.get('limit'));
+    const nameFilter = (params.get('name') ?? '*').replace(/\*/g, '').toLowerCase();
+    const matchingUsers = allUsers.filter((listedUser) => listedUser.name.toLowerCase().includes(nameFilter));
     await route.fulfill({
       status: 200,
-      json: allUsers.slice(0, limit),
+      json: matchingUsers.slice(0, limit),
     });
   });
 
@@ -263,6 +266,26 @@ test('list users', async ({ page }) => {
   const response = await limitedUsersResponse;
   expect(response.ok()).toBe(true);
   expect(new URL(response.url()).searchParams.get('limit')).toBe('1');
+  await expect(userResults.getByRole('listitem')).toHaveCount(1);
+  await expect(userResults).toContainText('Sample Diner');
+  await expect(userResults).not.toContainText('Sample Franchisee');
+
+  await page.getByRole('spinbutton', { name: 'User limit' }).fill('10');
+  const allUsersResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/user?') && response.request().method() === 'GET'
+  );
+  await page.getByRole('button', { name: 'List users', exact: true }).click();
+  expect((await allUsersResponse).ok()).toBe(true);
+  await expect(userResults.getByRole('listitem')).toHaveCount(2);
+
+  await page.getByRole('searchbox', { name: 'Search users' }).fill('Sample Diner');
+  const searchedUsersResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/user?') && response.request().method() === 'GET'
+  );
+  await page.getByRole('button', { name: 'List users', exact: true }).click();
+  const searchedResponse = await searchedUsersResponse;
+  expect(searchedResponse.ok()).toBe(true);
+  expect(new URL(searchedResponse.url()).searchParams.get('name')).toBe('*Sample Diner*');
   await expect(userResults.getByRole('listitem')).toHaveCount(1);
   await expect(userResults).toContainText('Sample Diner');
   await expect(userResults).not.toContainText('Sample Franchisee');
