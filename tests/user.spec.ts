@@ -1,5 +1,6 @@
 import { test, expect } from 'playwright-test-coverage';
 import type { Page } from '@playwright/test';
+import { Role, User } from '../src/service/pizzaService';
 
 async function registerUser(page: Page, name = 'pizza diner') {
   const email = `user-${crypto.randomUUID()}@jwt.com`;
@@ -24,6 +25,55 @@ async function loginUser(page: Page, email: string, password: string) {
   await page.getByRole('textbox', { name: 'Email address' }).fill(email);
   await page.getByRole('textbox', { name: 'Password' }).fill(password);
   await page.getByRole('button', { name: 'Login' }).click();
+}
+
+// Give role tests a predictable API user without depending on a seeded backend account.
+async function mockRoleUser(page: Page, role: Role) {
+  let user: User = {
+    id: role === Role.Admin ? 'admin-test' : 'franchise-test',
+    name: role === Role.Admin ? 'Test Admin' : 'Test Franchisee',
+    email: role === Role.Admin ? 'admin-test@jwt.com' : 'franchise-test@jwt.com',
+    password: 'test-password',
+    roles: [{ role }],
+  };
+
+  await page.route('**/api/auth', async (route) => {
+    const method = route.request().method();
+    if (method === 'PUT') {
+      const credentials = route.request().postDataJSON();
+      if (credentials.email !== user.email || credentials.password !== user.password) {
+        await route.fulfill({ status: 401, json: { message: 'Unauthorized' } });
+        return;
+      }
+      await route.fulfill({ json: { user, token: 'role-test-token' } });
+      return;
+    }
+    if (method === 'DELETE') {
+      await route.fulfill({ json: {} });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.route('**/api/user/me', async (route) => {
+    await route.fulfill({ json: null });
+  });
+
+  await page.route('**/api/user/*', async (route) => {
+    if (route.request().method() !== 'PUT') {
+      await route.continue();
+      return;
+    }
+    const changes = route.request().postDataJSON();
+    user = { ...user, ...changes, roles: user.roles };
+    await route.fulfill({ json: { user, token: 'role-test-token' } });
+  });
+
+  await page.route('**/api/order', async (route) => {
+    await route.fulfill({ json: { orders: [] } });
+  });
+
+  return { email: user.email!, password: user.password! };
 }
 
 test('updateUser', async ({ page }) => {
@@ -95,8 +145,7 @@ test('change password and email address', async ({ page }) => {
 });
 
 test('change user information as admin', async ({ page }) => {
-  const email = 'admin@jwt.com';
-  const password = 'admin';
+  const { email, password } = await mockRoleUser(page, Role.Admin);
   const updatedEmail = email.replace('@', '+updated@');
   const updatedPassword = `${password}-updated`;
 
@@ -136,9 +185,8 @@ test('change user information as admin', async ({ page }) => {
   await expect(page.getByRole('main')).toContainText(email);
 });
 
-test('change user information as franchise', async ({ page }) => {
-  const email = 'franchise@jwt.com';
-  const password = 'franchise';
+test('change user information as franchisee', async ({ page }) => {
+  const { email, password } = await mockRoleUser(page, Role.Franchisee);
   const updatedEmail = email.replace('@', '+updated@');
   const updatedPassword = `${password}-updated`;
 
