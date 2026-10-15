@@ -94,7 +94,30 @@ test('change password and email address', async ({ page }) => {
   await expect(page.getByText(/"code":\d+/)).toBeVisible();
 });
 
-test('change user information using different roles', async ({ page }) => {
-  const { email, password } = await registerUser(page);
+test('change user information as admin', async ({ page }) => {
+  //login as an admin
 
+  //navigate to edit profile
+
+  //change email and pass
+
+  //verify it shows
+
+  //logout and log back in with new pass and still shows
+
+  //try to log in with old pass and it errors
+});
+
+test('change user information as franchise', async ({ page }) => {
+  //login as an franchise
+
+  //navigate to edit profile
+
+  //change email and pass
+
+  //verify it shows
+
+  //logout and log back in with new pass and still shows
+
+  //try to log in with old pass and it errors
 });
