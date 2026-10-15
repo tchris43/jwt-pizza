@@ -43,3 +43,11 @@ test('updateUser', async ({ page }) => {
 
   
 });
+
+test('change password and email address', async ({ page }) => {
+  test.skip(true, 'Stub: implement after deciding whether this should be one or two scenarios.');
+});
+
+test('change user information using different roles', async ({ page }) => {
+  test.skip(true, 'Stub: define the expected permissions for each role before implementing.');
+});
