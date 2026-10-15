@@ -18,6 +18,7 @@ export default function AdminDashboard(props: Props) {
   const [users, setUsers] = React.useState<User[]>([]);
   const [showUsers, setShowUsers] = React.useState(false);
   const filterFranchiseRef = React.useRef<HTMLInputElement>(null);
+  const userLimitRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -29,7 +30,8 @@ export default function AdminDashboard(props: Props) {
     navigate('/admin-dashboard/create-franchise');
   }
   async function listUsers() {
-    setUsers(await pizzaService.getUsers());
+    const limit = Number(userLimitRef.current?.value) || 10;
+    setUsers(await pizzaService.getUsers(limit));
     setShowUsers(true);
   }
 
@@ -127,6 +129,10 @@ export default function AdminDashboard(props: Props) {
           </div>
         </div>
         <div>
+          <label className="mr-2 text-neutral-100">
+            User limit
+            <input aria-label="User limit" className="ml-2 w-16 rounded px-1 text-gray-800" type="number" min="1" defaultValue="10" ref={userLimitRef} />
+          </label>
           <Button className="w-36 text-xs sm:text-sm sm:w-64" title="Add Franchise" onPress={createFranchise} />
           <Button className="w-36 text-xs sm:text-sm sm:w-64" title="List users" onPress={listUsers} />
         </div>

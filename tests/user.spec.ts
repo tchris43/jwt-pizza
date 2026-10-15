@@ -228,12 +228,14 @@ test('list users', async ({ page }) => {
     await route.fulfill({ json: { franchises: [], more: false } });
   });
   await page.route(/\/api\/user\?/, async (route) => {
+    const allUsers = [
+      { id: 'user-1', name: 'Sample Diner', email: 'diner@example.test', roles: [{ role: Role.Diner }] },
+      { id: 'user-2', name: 'Sample Franchisee', email: 'franchisee@example.test', roles: [{ role: Role.Franchisee }] },
+    ];
+    const limit = Number(new URL(route.request().url()).searchParams.get('limit'));
     await route.fulfill({
       status: 200,
-      json: [
-        { id: 'user-1', name: 'Sample Diner', email: 'diner@example.test', roles: [{ role: Role.Diner }] },
-        { id: 'user-2', name: 'Sample Franchisee', email: 'franchisee@example.test', roles: [{ role: Role.Franchisee }] },
-      ],
+      json: allUsers.slice(0, limit),
     });
   });
 
@@ -252,4 +254,16 @@ test('list users', async ({ page }) => {
   await expect(userResults.getByRole('listitem')).toHaveCount(2);
   await expect(userResults).toContainText('Sample Diner');
   await expect(userResults).toContainText('Sample Franchisee');
+
+  await page.getByRole('spinbutton', { name: 'User limit' }).fill('1');
+  const limitedUsersResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/user?') && response.request().method() === 'GET'
+  );
+  await page.getByRole('button', { name: 'List users', exact: true }).click();
+  const response = await limitedUsersResponse;
+  expect(response.ok()).toBe(true);
+  expect(new URL(response.url()).searchParams.get('limit')).toBe('1');
+  await expect(userResults.getByRole('listitem')).toHaveCount(1);
+  await expect(userResults).toContainText('Sample Diner');
+  await expect(userResults).not.toContainText('Sample Franchisee');
 });
