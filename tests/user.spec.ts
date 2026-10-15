@@ -103,7 +103,6 @@ test('change user information as admin', async ({ page }) => {
   await page.goto('/');
   await loginUser(page, email, password);
   await page.locator('a[href="/diner-dashboard"]').click();
-
   await page.getByRole('button', { name: 'Edit' }).click();
   const dialog = page.getByRole('dialog');
   const fields = dialog.getByRole('textbox');
@@ -111,7 +110,6 @@ test('change user information as admin', async ({ page }) => {
   await fields.nth(2).fill(updatedPassword);
   await dialog.getByRole('button', { name: 'Update' }).click();
   await expect(dialog).toBeHidden();
-
   await expect(page.getByRole('main')).toContainText(updatedEmail);
 
   await logoutUser(page);
@@ -121,7 +119,21 @@ test('change user information as admin', async ({ page }) => {
 
   await logoutUser(page);
   await loginUser(page, updatedEmail, password);
-  await expect(page.getByText(/"code":\d+/)).toBeVisible();
+  await expect(page.getByText(/"code":401/)).toBeVisible();
+
+  await loginUser(page, updatedEmail, updatedPassword);
+  await page.locator('a[href="/diner-dashboard"]').click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  const resetDialog = page.getByRole('dialog');
+  const resetFields = resetDialog.getByRole('textbox');
+  await resetFields.nth(1).fill(email);
+  await resetFields.nth(2).fill(password);
+  await resetDialog.getByRole('button', { name: 'Update' }).click();
+  await expect(resetDialog).toBeHidden();
+  await logoutUser(page);
+  await loginUser(page, email, password);
+  await page.locator('a[href="/diner-dashboard"]').click();
+  await expect(page.getByRole('main')).toContainText(email);
 });
 
 test('change user information as franchise', async ({ page }) => {
@@ -133,7 +145,6 @@ test('change user information as franchise', async ({ page }) => {
   await page.goto('/');
   await loginUser(page, email, password);
   await page.locator('a[href="/diner-dashboard"]').click();
-
   await page.getByRole('button', { name: 'Edit' }).click();
   const dialog = page.getByRole('dialog');
   const fields = dialog.getByRole('textbox');
@@ -141,7 +152,6 @@ test('change user information as franchise', async ({ page }) => {
   await fields.nth(2).fill(updatedPassword);
   await dialog.getByRole('button', { name: 'Update' }).click();
   await expect(dialog).toBeHidden();
-
   await expect(page.getByRole('main')).toContainText(updatedEmail);
 
   await logoutUser(page);
@@ -151,5 +161,19 @@ test('change user information as franchise', async ({ page }) => {
 
   await logoutUser(page);
   await loginUser(page, updatedEmail, password);
-  await expect(page.getByText(/"code":\d+/)).toBeVisible();
+  await expect(page.getByText(/"code":401/)).toBeVisible();
+
+  await loginUser(page, updatedEmail, updatedPassword);
+  await page.locator('a[href="/diner-dashboard"]').click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  const resetDialog = page.getByRole('dialog');
+  const resetFields = resetDialog.getByRole('textbox');
+  await resetFields.nth(1).fill(email);
+  await resetFields.nth(2).fill(password);
+  await resetDialog.getByRole('button', { name: 'Update' }).click();
+  await expect(resetDialog).toBeHidden();
+  await logoutUser(page);
+  await loginUser(page, email, password);
+  await page.locator('a[href="/diner-dashboard"]').click();
+  await expect(page.getByRole('main')).toContainText(email);
 });
