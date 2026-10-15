@@ -2,7 +2,7 @@ import { test, expect } from 'playwright-test-coverage';
 import type { Page } from '@playwright/test';
 
 async function registerUser(page: Page, name = 'pizza diner') {
-  const email = `user${Math.floor(Math.random() * 10000)}@jwt.com`;
+  const email = `user-${crypto.randomUUID()}@jwt.com`;
   const password = 'diner';
 
   await page.goto('/');
@@ -79,17 +79,22 @@ test('change password and email address', async ({ page }) => {
 
   await page.waitForSelector('[role="dialog"].hidden', { state: 'attached' });
 
-  //verify that the email shows up in the user info as the new email
+  await expect(page.getByRole('main')).toContainText(updatedEmail);
 
-  //logout and login with the new password and expect no error to be thrown
+  await logoutUser(page);
+  await loginUser(page, updatedEmail, updatedPassword);
+  await expect(page.getByRole('link', { name: 'pd' })).toBeVisible();
 
   await page.getByRole('link', { name: 'pd' }).click();
 
-  //await expect new email visible
+  await expect(page.getByRole('main')).toContainText(updatedEmail);
 
-  //expect logout and login with old password to throw error
+  await logoutUser(page);
+  await loginUser(page, updatedEmail, password);
+  await expect(page.getByText(/"code":\d+/)).toBeVisible();
 });
 
 test('change user information using different roles', async ({ page }) => {
-  await registerUser(page);
+  const { email, password } = await registerUser(page);
+
 });
