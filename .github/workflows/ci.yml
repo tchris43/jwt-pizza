@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     env:
-      VITE_PIZZA_SERVICE_URL: https://pizza-service.cs329.click
+      VITE_PIZZA_SERVICE_URL: https://pizza-service.nextevent.click
     name: Build
     runs-on: ubuntu-latest
     outputs:
