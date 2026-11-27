@@ -71,6 +71,50 @@ I decided to conduct an experiment using mutation testing on jwt pizza to see if
    + {order.items.reduce((a: any, c: any) => a - c.price, 0).toLocaleString()} ₿
    ```
 
+## Steps to reproduce the experiment
+
+## Set Up Stryker
+
+Run the setup wizard:
+
+```sh
+npm init stryker@latest
+```
+
+Choose these options in order:
+
+1. `None/other`
+2. `command`
+3. Press Enter
+4. Press Enter
+5. `npm`
+6. `JavaScript`
+
+Then set up `stryker.config.mjs`:
+
+```js
+// @ts-check
+/** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
+const config = {
+  packageManager: "npm",
+  reporters: ["html", "clear-text", "progress"],
+  testRunner: "command",
+  commandRunner: {
+    command: "npm test",
+  },
+  mutate: ["src/views/payment.tsx"],
+  coverageAnalysis: "off",
+};
+
+export default config;
+```
+
+Run mutation testing:
+
+```sh
+npx stryker run
+```
+
 ## Conclusion
 
 I learned that even having high test coverage does not actually guarantee that your tests are ensuring your code is behaving the way you think it is. If someone accidentally changed how the price gets calculated and made it so that it subtracted instead of added, the test would have passed and they would have moved forward with confidence. Mutation testing helps to find which tests are not yet completely testing all broken cases.
